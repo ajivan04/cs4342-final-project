@@ -1,0 +1,82 @@
+[
+  {
+    "index": 10,
+    "path": "data/clean_data/test/formal_professional/formal_professional_test_0000.jpg",
+    "true_label": "formal_professional",
+    "pred_label": "party_social",
+    "confidence": 0.6970720291137695,
+    "true_confidence": 0.10228146612644196
+  },
+  {
+    "index": 13,
+    "path": "data/clean_data/test/formal_professional/formal_professional_test_0003.jpg",
+    "true_label": "formal_professional",
+    "pred_label": "casual_everyday",
+    "confidence": 0.6722015142440796,
+    "true_confidence": 0.18808557093143463
+  },
+  {
+    "index": 24,
+    "path": "data/clean_data/test/formal_professional/formal_professional_test_0014.jpg",
+    "true_label": "formal_professional",
+    "pred_label": "party_social",
+    "confidence": 0.607001543045044,
+    "true_confidence": 0.11063429713249207
+  },
+  {
+    "index": 22,
+    "path": "data/clean_data/test/formal_professional/formal_professional_test_0012.jpg",
+    "true_label": "formal_professional",
+    "pred_label": "casual_everyday",
+    "confidence": 0.559175968170166,
+    "true_confidence": 0.2821138799190521
+  },
+  {
+    "index": 23,
+    "path": "data/clean_data/test/formal_professional/formal_professional_test_0013.jpg",
+    "true_label": "formal_professional",
+    "pred_label": "casual_everyday",
+    "confidence": 0.5579078197479248,
+    "true_confidence": 0.17164713144302368
+  },
+  {
+    "index": 6,
+    "path": "data/clean_data/test/casual_everyday/casual_everyday_test_0006.jpg",
+    "true_label": "casual_everyday",
+    "pred_label": "gym_athletic",
+    "confidence": 0.5531532168388367,
+    "true_confidence": 0.3078017830848694
+  },
+  {
+    "index": 34,
+    "path": "data/clean_data/test/party_social/party_social_test_0002.jpg",
+    "true_label": "party_social",
+    "pred_label": "casual_everyday",
+    "confidence": 0.5146165490150452,
+    "true_confidence": 0.10460594296455383
+  },
+  {
+    "index": 32,
+    "path": "data/clean_data/test/party_social/party_social_test_0000.jpg",
+    "true_label": "party_social",
+    "pred_label": "casual_everyday",
+    "confidence": 0.5102614760398865,
+    "true_confidence": 0.09651105105876923
+  },
+  {
+    "index": 30,
+    "path": "data/clean_data/test/gym_athletic/gym_athletic_test_0003.jpg",
+    "true_label": "gym_athletic",
+    "pred_label": "casual_everyday",
+    "confidence": 0.4887163043022156,
+    "true_confidence": 0.15053845942020416
+  },
+  {
+    "index": 29,
+    "path": "data/clean_data/test/gym_athletic/gym_athletic_test_0002.jpg",
+    "true_label": "gym_athletic",
+    "pred_label": "casual_everyday",
+    "confidence": 0.3732466697692871,
+    "true_confidence": 0.3589133322238922
+  }
+]

@@ -1,0 +1,59 @@
+{
+  "overall_accuracy": 0.6756756756756757,
+  "top2_accuracy": 0.7837837837837838,
+  "macro_precision": 0.65,
+  "macro_recall": 0.6264705882352941,
+  "macro_f1": 0.6218538166814029,
+  "per_class": {
+    "casual_everyday": {
+      "precision": 0.5,
+      "recall": 0.8,
+      "f1": 0.6153846153846154,
+      "support": 10
+    },
+    "formal_professional": {
+      "precision": 1.0,
+      "recall": 0.7058823529411765,
+      "f1": 0.8275862068965517,
+      "support": 17
+    },
+    "gym_athletic": {
+      "precision": 0.6,
+      "recall": 0.6,
+      "f1": 0.6,
+      "support": 5
+    },
+    "party_social": {
+      "precision": 0.5,
+      "recall": 0.4,
+      "f1": 0.4444444444444444,
+      "support": 5
+    }
+  },
+  "confusion_matrix": [
+    [
+      8,
+      0,
+      2,
+      0
+    ],
+    [
+      3,
+      12,
+      0,
+      2
+    ],
+    [
+      2,
+      0,
+      3,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      2
+    ]
+  ]
+}
