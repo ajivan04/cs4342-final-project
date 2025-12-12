@@ -8,19 +8,19 @@ import random
 
 # Configuration
 RAW_DATA_DIR = "data/raw_data"  # Your original images
-CLEAN_DATA_DIR = "data/clean_data"
+CLEAN_DATA_DIR = "data/clean_data"  # Where cleaned images will be saved
 CATEGORIES = ["formal_professional", "party_social", "gym_athletic", "casual_everyday"]
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
 TEST_RATIO = 0.15
-MIN_IMAGE_SIZE = 224  # Minimum dimension
+MIN_IMAGE_SIZE = 100  # Lowered minimum - will upscale small images
 RANDOM_SEED = 42
 
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
 
-def is_valid_image(image_path):
+def is_valid_image(image_path, min_size=100):
     """Check if image is valid and meets minimum size requirements"""
     try:
         with Image.open(image_path) as img:
@@ -31,10 +31,10 @@ def is_valid_image(image_path):
         with Image.open(image_path) as img:
             width, height = img.size
             
-            # Check minimum size
-            if min(width, height) < MIN_IMAGE_SIZE:
-                print(f"⚠️  Image too small: {image_path} ({width}x{height})")
-                return False
+            # Check minimum size (lowered threshold - we'll upscale if needed)
+            if min(width, height) < min_size:
+                print(f"⚠️  Image too small: {image_path} ({width}x{height}) - will upscale")
+                # Don't reject, just warn - we'll upscale it
             
             # Check if image is corrupted
             img.load()
@@ -45,26 +45,38 @@ def is_valid_image(image_path):
         return False
 
 
-def resize_and_save(src_path, dst_path, max_size=1024):
-    """Resize image if too large while maintaining aspect ratio"""
+def resize_and_save(src_path, dst_path, target_size=224, max_size=1024):
+    """
+    Resize image to appropriate size:
+    - If too small: upscale to target_size
+    - If too large: downscale to max_size
+    - Always maintain aspect ratio
+    """
     try:
         with Image.open(src_path) as img:
             # Convert to RGB if necessary
             if img.mode != 'RGB':
                 img = img.convert('RGB')
             
-            # Resize if too large
             width, height = img.size
-            if max(width, height) > max_size:
-                if width > height:
-                    new_width = max_size
-                    new_height = int(height * (max_size / width))
-                else:
-                    new_height = max_size
-                    new_width = int(width * (max_size / height))
-                
+            min_dim = min(width, height)
+            max_dim = max(width, height)
+            
+            # Determine if we need to resize
+            if min_dim < target_size:
+                # Upscale small images
+                scale_factor = target_size / min_dim
+                new_width = int(width * scale_factor)
+                new_height = int(height * scale_factor)
                 img = img.resize((new_width, new_height), Image.LANCZOS)
-                print(f"  Resized: {width}x{height} → {new_width}x{new_height}")
+                print(f"  ⬆️  Upscaled: {width}x{height} → {new_width}x{new_height}")
+            elif max_dim > max_size:
+                # Downscale large images
+                scale_factor = max_size / max_dim
+                new_width = int(width * scale_factor)
+                new_height = int(height * scale_factor)
+                img = img.resize((new_width, new_height), Image.LANCZOS)
+                print(f"  ⬇️  Downscaled: {width}x{height} → {new_width}x{new_height}")
             
             # Save
             img.save(dst_path, 'JPEG', quality=95)
@@ -135,7 +147,7 @@ def clean_and_organize_data():
         # Validate images
         valid_images = []
         for img_path in image_files:
-            if is_valid_image(img_path):
+            if is_valid_image(img_path, min_size=MIN_IMAGE_SIZE):
                 valid_images.append(img_path)
                 stats['valid'] += 1
             else:
@@ -158,7 +170,7 @@ def clean_and_organize_data():
         for split, images in [('train', train_imgs), ('val', val_imgs), ('test', test_imgs)]:
             for i, img_path in enumerate(images):
                 dst_path = Path(f"{CLEAN_DATA_DIR}/{split}/{category}/{category}_{split}_{i:04d}.jpg")
-                if resize_and_save(img_path, dst_path):
+                if resize_and_save(img_path, dst_path, target_size=224):
                     category_stats[category][split] += 1
                     stats[split] += 1
     
