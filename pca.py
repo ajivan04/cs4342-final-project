@@ -122,18 +122,15 @@ def plot_pca_predictions_3d(features, predictions, labels, class_names, save_pat
     - X, Y axes: First 2 principal components of input x
     - Z axis: Predicted class ŷ
     """
-    # Apply PCA to reduce features to 2D
+    # apple PCA to reduce features to 2D
     pca = PCA(n_components=2)
     features_2d = pca.fit_transform(features)
     
-    # Create figure
     fig = plt.figure(figsize=(14, 10))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Color map for classes
     colors = plt.cm.Set3(np.linspace(0, 1, len(class_names)))
     
-    # Plot each class
     for class_idx in range(len(class_names)):
         mask = predictions == class_idx
         ax.scatter(
@@ -148,20 +145,16 @@ def plot_pca_predictions_3d(features, predictions, labels, class_names, save_pat
             linewidth=0.5
         )
     
-    # Labels and title
     ax.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)', fontsize=12, labelpad=10)
     ax.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)', fontsize=12, labelpad=10)
     ax.set_zlabel('Predicted Class ŷ', fontsize=12, labelpad=10)
     ax.set_title(title, fontsize=14, pad=20)
     
-    # Set z-axis to show class indices
     ax.set_zticks(range(len(class_names)))
     ax.set_zticklabels(range(len(class_names)))
     
-    # Legend
     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), fontsize=10)
     
-    # Viewing angle
     ax.view_init(elev=20, azim=45)
     
     plt.tight_layout()
@@ -170,7 +163,6 @@ def plot_pca_predictions_3d(features, predictions, labels, class_names, save_pat
     
     print(f"  Saved 3D prediction visualization to {save_path}")
     
-    # Return PCA object and explained variance
     return pca
 
 
@@ -180,21 +172,19 @@ def plot_pca_with_confidence(features, predictions, probs, labels, class_names, 
     - X, Y axes: First 2 principal components
     - Z axis: Prediction confidence (max probability)
     """
-    # Apply PCA
+    # apply PCA
     pca = PCA(n_components=2)
     features_2d = pca.fit_transform(features)
     
-    # Get maximum probability (confidence)
+    # max probability (confidence)
     confidence = np.max(probs, axis=1)
     
-    # Create figure
     fig = plt.figure(figsize=(14, 10))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Color by correctness
     correct = predictions == labels
     
-    # Plot correct predictions
+    # correct predictions
     mask_correct = correct
     scatter_correct = ax.scatter(
         features_2d[mask_correct, 0],
@@ -208,7 +198,7 @@ def plot_pca_with_confidence(features, predictions, probs, labels, class_names, 
         linewidth=0.5
     )
     
-    # Plot incorrect predictions
+    # incorrect predictions
     mask_incorrect = ~correct
     if mask_incorrect.sum() > 0:
         scatter_incorrect = ax.scatter(
@@ -223,7 +213,6 @@ def plot_pca_with_confidence(features, predictions, probs, labels, class_names, 
             linewidth=0.5
         )
     
-    # Labels
     ax.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)', fontsize=12, labelpad=10)
     ax.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)', fontsize=12, labelpad=10)
     ax.set_zlabel('Prediction Confidence', fontsize=12, labelpad=10)
@@ -243,16 +232,14 @@ def plot_pca_2d_by_class(features, predictions, labels, class_names, save_path):
     """
     Create 2D PCA visualization colored by predicted class
     """
-    # Apply PCA
+    # apply PCA
     pca = PCA(n_components=2)
     features_2d = pca.fit_transform(features)
     
-    # Create figure
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
     
     colors = plt.cm.Set3(np.linspace(0, 1, len(class_names)))
     
-    # Plot by predicted class
     for class_idx in range(len(class_names)):
         mask = predictions == class_idx
         ax1.scatter(
@@ -272,7 +259,7 @@ def plot_pca_2d_by_class(features, predictions, labels, class_names, save_path):
     ax1.legend(fontsize=9)
     ax1.grid(alpha=0.3)
     
-    # Plot by true class
+    # true class
     for class_idx in range(len(class_names)):
         mask = labels == class_idx
         ax2.scatter(
@@ -310,7 +297,6 @@ def plot_class_separation(features, labels, class_names, save_path):
     
     colors = plt.cm.Set3(np.linspace(0, 1, len(class_names)))
     
-    # Plot each class with larger markers
     for class_idx in range(len(class_names)):
         mask = labels == class_idx
         ax.scatter(
@@ -324,7 +310,6 @@ def plot_class_separation(features, labels, class_names, save_path):
             linewidth=1
         )
         
-        # Add class centroid
         centroid = features_2d[mask].mean(axis=0)
         ax.scatter(
             centroid[0], centroid[1],
@@ -375,32 +360,27 @@ def visualize_pca_predictions():
     """Main visualization function"""
     config = Config()
     
-    print("🎨 Starting PCA Visualization")
+    print("Starting PCA Visualization")
     print(f"Device: {config.DEVICE}")
     
-    # Create output directory
     Path(config.RESULTS_DIR).mkdir(exist_ok=True)
     
-    # Load data
-    print("\n📦 Loading data...")
+    print("Loading data...")
     train_loader, test_loader, class_names = get_dataloaders(config)
     print(f"Classes: {class_names}")
     
-    # Load model
-    print(f"\n🏗️  Loading model from {config.CHECKPOINT_PATH}...")
+    print(f"Loading model from {config.CHECKPOINT_PATH}...")
     model, checkpoint = load_model(config.CHECKPOINT_PATH, config.NUM_CLASSES, config.DEVICE)
     print("Model loaded successfully!")
     
-    # Extract features and predictions from test set
-    print("\n📊 Extracting features and predictions from test set...")
+    print("Extracting features and predictions from test set...")
     features, predictions, labels, probs = extract_features_and_predictions(
         model, test_loader, config.DEVICE, max_samples=1000
     )
     print(f"Extracted {len(features)} samples")
     print(f"Feature dimension: {features.shape[1]}")
     
-    # Generate visualizations
-    print("\n🎨 Generating PCA visualizations...")
+    print("Generating PCA visualizations...")
     
     # 1. Main 3D plot: g(x) with PCA dimensions and predictions
     print("\n1. Creating 3D prediction visualization (g(x))...")
@@ -436,7 +416,7 @@ def visualize_pca_predictions():
     analyze_pca_components(pca, f"{config.RESULTS_DIR}/pca_analysis.json")
     
     # Extract features from training set for comparison
-    print("\n📊 Extracting features from training set...")
+    print("Extracting features from training set...")
     train_features, train_predictions, train_labels, train_probs = extract_features_and_predictions(
         model, train_loader, config.DEVICE, max_samples=1000
     )
@@ -449,7 +429,7 @@ def visualize_pca_predictions():
         "3D Visualization: g(x) - Training Set"
     )
     
-    print(f"\n✅ PCA visualization complete!")
+    print(f"\nPCA visualization complete!")
     print(f"All visualizations saved to: {config.RESULTS_DIR}/")
     print(f"\nGenerated files:")
     print(f"  - pca_predictions_3d.png (Main 3D plot for assignment)")

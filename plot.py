@@ -8,7 +8,6 @@ def plot_training_curves(history_path, save_dir):
     """
     Plot training and validation loss/accuracy curves
     """
-    # Load training history
     with open(history_path, 'r') as f:
         data = json.load(f)
     
@@ -16,7 +15,6 @@ def plot_training_curves(history_path, save_dir):
     phase2 = data['phase2']
     class_names = data.get('class_names', [])
     
-    # Combine phases
     train_loss = phase1['train_loss'] + phase2['train_loss']
     train_acc = phase1['train_acc'] + phase2['train_acc']
     val_loss = phase1['val_loss'] + phase2['val_loss']
@@ -28,10 +26,9 @@ def plot_training_curves(history_path, save_dir):
     
     epochs = np.arange(1, total_epochs + 1)
     
-    # Create figure with 2 subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
     
-    # Plot 1: Loss
+    # plot 1: Loss
     ax1.plot(epochs, train_loss, 'b-', label='Training Loss', linewidth=2, marker='o')
     ax1.plot(epochs, val_loss, 'r-', label='Validation Loss', linewidth=2, marker='s')
     ax1.axvline(x=phase1_epochs, color='gray', linestyle='--', linewidth=2, alpha=0.7, label='Phase 1→2')
@@ -41,13 +38,12 @@ def plot_training_curves(history_path, save_dir):
     ax1.legend(fontsize=12)
     ax1.grid(alpha=0.3)
     
-    # Add phase labels
     ax1.text(phase1_epochs/2, max(train_loss)*0.95, 'Phase 1\n(Frozen)', 
              ha='center', fontsize=11, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     ax1.text(phase1_epochs + phase2_epochs/2, max(train_loss)*0.95, 'Phase 2\n(Fine-tune)', 
              ha='center', fontsize=11, bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.5))
     
-    # Plot 2: Accuracy
+    # plot 2: Accuracy
     ax2.plot(epochs, train_acc, 'b-', label='Training Accuracy', linewidth=2, marker='o')
     ax2.plot(epochs, val_acc, 'r-', label='Validation Accuracy', linewidth=2, marker='s')
     ax2.axvline(x=phase1_epochs, color='gray', linestyle='--', linewidth=2, alpha=0.7, label='Phase 1→2')
@@ -58,7 +54,6 @@ def plot_training_curves(history_path, save_dir):
     ax2.grid(alpha=0.3)
     ax2.set_ylim([0, 1.05])
     
-    # Add phase labels
     ax2.text(phase1_epochs/2, 0.05, 'Phase 1\n(Frozen)', 
              ha='center', fontsize=11, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     ax2.text(phase1_epochs + phase2_epochs/2, 0.05, 'Phase 2\n(Fine-tune)', 
@@ -69,10 +64,9 @@ def plot_training_curves(history_path, save_dir):
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"✅ Saved training curves to {save_path}")
+    print(f"Saved training curves to {save_path}")
     
-    # Print summary statistics
-    print(f"\n📊 Training Summary:")
+    print(f"Training Summary:")
     print(f"  Phase 1 (Frozen Backbone):")
     print(f"    Final Train Loss: {phase1['train_loss'][-1]:.4f}, Accuracy: {phase1['train_acc'][-1]:.4f}")
     print(f"    Final Val Loss:   {phase1['val_loss'][-1]:.4f}, Accuracy: {phase1['val_acc'][-1]:.4f}")
@@ -95,19 +89,17 @@ def plot_loss_landscape_concept(save_dir):
     y = np.linspace(-3, 3, 100)
     X, Y = np.meshgrid(x, y)
     
-    # Create a loss-like surface (double-well potential)
+    # create a loss-like surface (double-well potential)
     Z = (X**2 + Y**2) + 5*np.sin(X) + 5*np.sin(Y) + 0.1*X*Y
     
-    # Plot surface
     surf = ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.6, edgecolor='none')
     
-    # Simulate training trajectory (gradient descent)
+    # simulate training trajectory (gradient descent)
     trajectory_x = np.linspace(-2, 0.5, 50)
     trajectory_y = np.linspace(-2, 0.3, 50)
     trajectory_z = [(x**2 + y**2) + 5*np.sin(x) + 5*np.sin(y) + 0.1*x*y 
                     for x, y in zip(trajectory_x, trajectory_y)]
     
-    # Plot training path
     ax.plot(trajectory_x, trajectory_y, trajectory_z, 'r-', linewidth=3, label='Training Path')
     ax.scatter(trajectory_x[0], trajectory_y[0], trajectory_z[0], 
                c='green', s=200, marker='o', label='Start', edgecolors='black', linewidth=2)
@@ -127,7 +119,7 @@ def plot_loss_landscape_concept(save_dir):
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"✅ Saved conceptual loss landscape to {save_path}")
+    print(f"Saved conceptual loss landscape to {save_path}")
 
 
 def plot_phase_comparison(history_path, save_dir):
@@ -140,7 +132,6 @@ def plot_phase_comparison(history_path, save_dir):
     phase1 = data['phase1']
     phase2 = data['phase2']
     
-    # Calculate improvements
     metrics = {
         'Train Loss': [phase1['train_loss'][-1], phase2['train_loss'][-1]],
         'Val Loss': [phase1['val_loss'][-1], phase2['val_loss'][-1]],
@@ -157,14 +148,12 @@ def plot_phase_comparison(history_path, save_dir):
         colors = ['skyblue', 'lightcoral']
         bars = ax.bar(phases, values, color=colors, edgecolor='black', linewidth=2, alpha=0.7)
         
-        # Add value labels on bars
         for bar, val in zip(bars, values):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                    f'{val:.4f}',
                    ha='center', va='bottom', fontsize=12, fontweight='bold')
         
-        # Calculate improvement
         if 'Loss' in metric_name:
             improvement = ((values[0] - values[1]) / values[0]) * 100
             label = f"↓ {improvement:.1f}% (better)" if improvement > 0 else f"↑ {-improvement:.1f}% (worse)"
@@ -187,7 +176,7 @@ def plot_phase_comparison(history_path, save_dir):
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"✅ Saved phase comparison to {save_path}")
+    print(f"Saved phase comparison to {save_path}")
 
 
 def main():
@@ -195,18 +184,15 @@ def main():
     history_path = "checkpoints/training_history.json"
     save_dir = "training_visualizations"
     
-    # Create output directory
     Path(save_dir).mkdir(exist_ok=True)
     
-    print("📈 Generating Training Visualizations\n")
+    print("Generating Training Visualizations\n")
     
-    # Check if history file exists
     if not Path(history_path).exists():
-        print(f"❌ Error: Training history not found at {history_path}")
+        print(f"Error: Training history not found at {history_path}")
         print("   Please run train.py first to generate training history.")
         return
     
-    # Generate plots
     print("1. Plotting training curves...")
     plot_training_curves(history_path, save_dir)
     
@@ -216,7 +202,7 @@ def main():
     print("\n3. Creating conceptual loss landscape...")
     plot_loss_landscape_concept(save_dir)
     
-    print(f"\n✅ All visualizations complete!")
+    print(f"All visualizations complete!")
     print(f"Saved to: {save_dir}/")
 
 

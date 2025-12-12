@@ -7,13 +7,13 @@ from collections import defaultdict
 import random
 
 # Configuration
-RAW_DATA_DIR = "data/raw_data"  # Your original images
-CLEAN_DATA_DIR = "data/clean_data"  # Where cleaned images will be saved
+RAW_DATA_DIR = "data/raw_data" 
+CLEAN_DATA_DIR = "data/clean_data"  
 CATEGORIES = ["formal_professional", "party_social", "gym_athletic", "casual_everyday"]
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
 TEST_RATIO = 0.15
-MIN_IMAGE_SIZE = 100  # Lowered minimum - will upscale small images
+MIN_IMAGE_SIZE = 100 
 RANDOM_SEED = 42
 
 random.seed(RANDOM_SEED)
@@ -24,24 +24,22 @@ def is_valid_image(image_path, min_size=100):
     """Check if image is valid and meets minimum size requirements"""
     try:
         with Image.open(image_path) as img:
-            # Check if image can be loaded
             img.verify()
         
-        # Reopen for size check (verify() closes the file)
+        # check size
         with Image.open(image_path) as img:
             width, height = img.size
             
-            # Check minimum size (lowered threshold - we'll upscale if needed)
+            # upscale smaller images
             if min(width, height) < min_size:
-                print(f"⚠️  Image too small: {image_path} ({width}x{height}) - will upscale")
-                # Don't reject, just warn - we'll upscale it
+                print(f"Image too small: {image_path} ({width}x{height}) - will upscale")
+
             
-            # Check if image is corrupted
             img.load()
             
             return True
     except Exception as e:
-        print(f"❌ Invalid image {image_path}: {e}")
+        print(f"Invalid image {image_path}: {e}")
         return False
 
 
@@ -54,7 +52,7 @@ def resize_and_save(src_path, dst_path, target_size=224, max_size=1024):
     """
     try:
         with Image.open(src_path) as img:
-            # Convert to RGB if necessary
+            # rgb
             if img.mode != 'RGB':
                 img = img.convert('RGB')
             
@@ -62,27 +60,26 @@ def resize_and_save(src_path, dst_path, target_size=224, max_size=1024):
             min_dim = min(width, height)
             max_dim = max(width, height)
             
-            # Determine if we need to resize
+            # check for re-size
             if min_dim < target_size:
-                # Upscale small images
+                # upscale
                 scale_factor = target_size / min_dim
                 new_width = int(width * scale_factor)
                 new_height = int(height * scale_factor)
                 img = img.resize((new_width, new_height), Image.LANCZOS)
-                print(f"  ⬆️  Upscaled: {width}x{height} → {new_width}x{new_height}")
+                print(f"Upscaled: {width}x{height} → {new_width}x{new_height}")
             elif max_dim > max_size:
-                # Downscale large images
+                # downsclae
                 scale_factor = max_size / max_dim
                 new_width = int(width * scale_factor)
                 new_height = int(height * scale_factor)
                 img = img.resize((new_width, new_height), Image.LANCZOS)
-                print(f"  ⬇️  Downscaled: {width}x{height} → {new_width}x{new_height}")
+                print(f"Downscaled: {width}x{height} → {new_width}x{new_height}")
             
-            # Save
             img.save(dst_path, 'JPEG', quality=95)
             return True
     except Exception as e:
-        print(f"❌ Error processing {src_path}: {e}")
+        print(f"Error processing {src_path}: {e}")
         return False
 
 
@@ -90,16 +87,15 @@ def split_data_random(image_files, train_ratio, val_ratio, test_ratio):
     """
     Split data randomly into train/val/test sets
     """
-    # Shuffle all images
+    # shuffle data
     image_files = list(image_files)
     random.shuffle(image_files)
     
-    # Calculate split indices
     n_images = len(image_files)
     n_train = int(n_images * train_ratio)
     n_val = int(n_images * val_ratio)
     
-    # Split into train/val/test
+    # split into train/val/test
     train_images = image_files[:n_train]
     val_images = image_files[n_train:n_train + n_val]
     test_images = image_files[n_train + n_val:]
@@ -109,9 +105,8 @@ def split_data_random(image_files, train_ratio, val_ratio, test_ratio):
 
 def clean_and_organize_data():
     """Main function to clean and organize data"""
-    print("🧹 Starting data cleaning and organization...\n")
+    print("Starting data cleaning and organization...\n")
     
-    # Create directory structure
     for split in ['train', 'val', 'test']:
         for category in CATEGORIES:
             Path(f"{CLEAN_DATA_DIR}/{split}/{category}").mkdir(parents=True, exist_ok=True)
@@ -129,11 +124,11 @@ def clean_and_organize_data():
     
     # Process each category
     for category in CATEGORIES:
-        print(f"\n📁 Processing category: {category}")
+        print(f"Processing category: {category}")
         category_path = Path(RAW_DATA_DIR) / category
         
         if not category_path.exists():
-            print(f"⚠️  Warning: {category_path} does not exist. Skipping...")
+            print(f"Warning: {category_path} does not exist. Skipping...")
             continue
         
         # Get all image files
@@ -156,7 +151,7 @@ def clean_and_organize_data():
         print(f"  Valid images: {len(valid_images)}")
         
         if len(valid_images) == 0:
-            print(f"  ⚠️  No valid images found for {category}")
+            print(f"No valid images found for {category}")
             continue
         
         # Split into train/val/test
@@ -175,9 +170,7 @@ def clean_and_organize_data():
                     stats[split] += 1
     
     # Print summary
-    print("\n" + "="*60)
-    print("📊 DATA CLEANING SUMMARY")
-    print("="*60)
+    print("DATA CLEANING SUMMARY")
     print(f"Total images processed: {stats['total']}")
     print(f"Valid images: {stats['valid']}")
     print(f"Invalid/rejected images: {stats['invalid']}")
@@ -186,7 +179,7 @@ def clean_and_organize_data():
     print(f"  Val:   {stats['val']} ({stats['val']/stats['valid']*100:.1f}%)")
     print(f"  Test:  {stats['test']} ({stats['test']/stats['valid']*100:.1f}%)")
     
-    print(f"\n📈 Per-category breakdown:")
+    print(f"Per-category breakdown:")
     for category in CATEGORIES:
         total = sum(category_stats[category].values())
         if total > 0:
@@ -196,7 +189,6 @@ def clean_and_organize_data():
             print(f"    Test:  {category_stats[category]['test']}")
             print(f"    Total: {total}")
     
-    print("\n✅ Data cleaning complete!")
     print(f"Clean data saved to: {CLEAN_DATA_DIR}/")
 
 

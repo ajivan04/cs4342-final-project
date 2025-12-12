@@ -12,27 +12,23 @@ from collections import Counter
 
 # Configuration
 class Config:
-    # Data
     DATA_DIR = "data/clean_data"
     NUM_CLASSES = 4
     BATCH_SIZE = 32
     NUM_WORKERS = 4
     
-    # Training Phase 1 (frozen backbone)
+    # phase 1
     PHASE1_EPOCHS = 10
     PHASE1_LR = 1e-3
     PHASE1_WEIGHT_DECAY = 1e-4
     
-    # Training Phase 2 (fine-tuning)
+    # phase 2
     PHASE2_EPOCHS = 10
     PHASE2_LR = 1e-4
     PHASE2_WEIGHT_DECAY = 1e-4
     
-    # Model
     MODEL_NAME = "resnet18"
     CHECKPOINT_DIR = "checkpoints"
-    
-    # Other
     RANDOM_SEED = 42
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -90,20 +86,17 @@ def get_dataloaders(config):
         transform=val_test_transform
     )
     
-    # Check class balance
     class_counts = Counter([label for _, label in train_dataset.samples])
-    print("\n📊 Training set class distribution:")
+    print("Training set class distribution:")
     for idx, count in sorted(class_counts.items()):
         print(f"  {train_dataset.classes[idx]}: {count} images")
     
-    # Calculate class weights for imbalanced datasets
     total = sum(class_counts.values())
     class_weights = torch.tensor(
         [total / class_counts[i] for i in range(config.NUM_CLASSES)],
         dtype=torch.float32
     )
     
-    # Create dataloaders
     train_loader = DataLoader(
         train_dataset,
         batch_size=config.BATCH_SIZE,
@@ -133,7 +126,7 @@ def create_model(config):
     """Create ResNet-18 model with custom final layer"""
     model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
     
-    # Replace final layer
+    # replace final layer
     in_features = model.fc.in_features
     model.fc = nn.Linear(in_features, config.NUM_CLASSES)
     
@@ -153,15 +146,12 @@ def freeze_backbone(model):
 
 def unfreeze_last_blocks(model, num_blocks=2):
     """Unfreeze last few residual blocks for fine-tuning"""
-    # Unfreeze all parameters first
     for param in model.parameters():
         param.requires_grad = False
     
-    # Unfreeze final fc
     for param in model.fc.parameters():
         param.requires_grad = True
     
-    # Unfreeze layer4 (last residual block)
     for param in model.layer4.parameters():
         param.requires_grad = True
     
@@ -227,51 +217,40 @@ def validate(model, loader, criterion, device):
 
 def train_phase(model, train_loader, val_loader, config, phase_num, num_epochs, lr, optimizer=None):
     """Train model for a specific phase"""
-    print(f"\n{'='*60}")
     print(f"PHASE {phase_num}: {'Frozen Backbone' if phase_num == 1 else 'Fine-tuning'}")
-    print(f"{'='*60}")
     
-    # Setup criterion with class weights
     _, _, _, class_weights, _ = get_dataloaders(config)
     criterion = nn.CrossEntropyLoss(weight=class_weights.to(config.DEVICE))
     
-    # Setup optimizer
     if optimizer is None:
         trainable_params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = optim.Adam(trainable_params, lr=lr, weight_decay=config.PHASE1_WEIGHT_DECAY)
     
-    # Learning rate scheduler
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
     
-    # Training loop
+    # training loop
     best_val_acc = 0.0
     best_model_path = None
     history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
     
     for epoch in range(num_epochs):
-        # Train
         train_loss, train_acc = train_epoch(
             model, train_loader, criterion, optimizer, config.DEVICE, config
         )
         
-        # Validate
         val_loss, val_acc = validate(model, val_loader, criterion, config.DEVICE)
         
-        # Update scheduler
         scheduler.step()
         
-        # Save history
         history['train_loss'].append(train_loss)
         history['train_acc'].append(train_acc)
         history['val_loss'].append(val_loss)
         history['val_acc'].append(val_acc)
         
-        # Print progress
         print(f"Epoch {epoch+1}/{num_epochs} | "
               f"Train Loss: {train_loss:.4f} Acc: {train_acc:.4f} | "
               f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
         
-        # Save best model
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_model_path = f"{config.CHECKPOINT_DIR}/best_phase{phase_num}_epoch{epoch+1}.pth"
@@ -282,9 +261,9 @@ def train_phase(model, train_loader, val_loader, config, phase_num, num_epochs, 
                 'val_acc': val_acc,
                 'val_loss': val_loss,
             }, best_model_path)
-            print(f"  ✅ Saved best model: {best_model_path}")
+            print(f"Saved best model: {best_model_path}")
     
-    print(f"\n🎯 Phase {phase_num} Best Val Accuracy: {best_val_acc:.4f}")
+    print(f"Phase {phase_num} Best Val Accuracy: {best_val_acc:.4f}")
     
     return model, best_model_path, history, best_val_acc
 
@@ -294,15 +273,14 @@ def main():
     config = Config()
     set_seed(config.RANDOM_SEED)
     
-    # Create checkpoint directory
     Path(config.CHECKPOINT_DIR).mkdir(exist_ok=True)
     
-    print(f"🚀 Starting Outfit Classification Training")
+    print(f"Starting Outfit Classification Training")
     print(f"Device: {config.DEVICE}")
     print(f"Batch Size: {config.BATCH_SIZE}")
     
-    # Load data
-    print("\n📦 Loading data...")
+    # load data
+    print("Loading data...")
     train_loader, val_loader, test_loader, class_weights, class_names = get_dataloaders(config)
     
     print(f"\nDataset sizes:")
@@ -311,15 +289,15 @@ def main():
     print(f"  Test:  {len(test_loader.dataset)} images")
     print(f"\nClasses: {class_names}")
     
-    # Create model
-    print("\n🏗️  Creating model...")
+    # create model
+    print("Creating model...")
     model = create_model(config)
     model = model.to(config.DEVICE)
     
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total parameters: {total_params:,}")
     
-    # Phase 1: Train with frozen backbone
+    # phase 1
     freeze_backbone(model)
     model, phase1_path, phase1_history, phase1_acc = train_phase(
         model, train_loader, val_loader, config,
@@ -328,7 +306,7 @@ def main():
         lr=config.PHASE1_LR
     )
     
-    # Phase 2: Fine-tune last blocks
+    # phase 2
     unfreeze_last_blocks(model, num_blocks=2)
     model, phase2_path, phase2_history, phase2_acc = train_phase(
         model, train_loader, val_loader, config,
@@ -337,7 +315,6 @@ def main():
         lr=config.PHASE2_LR
     )
     
-    # Save final model
     final_path = f"{config.CHECKPOINT_DIR}/final_model.pth"
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -347,12 +324,11 @@ def main():
         'phase2_acc': phase2_acc,
     }, final_path)
     
-    print(f"\n✅ Training complete!")
+    print(f"Training complete!")
     print(f"Final model saved to: {final_path}")
     print(f"Phase 1 best accuracy: {phase1_acc:.4f}")
     print(f"Phase 2 best accuracy: {phase2_acc:.4f}")
     
-    # Save training history
     history_path = f"{config.CHECKPOINT_DIR}/training_history.json"
     with open(history_path, 'w') as f:
         json.dump({

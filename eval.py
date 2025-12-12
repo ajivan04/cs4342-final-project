@@ -1,8 +1,3 @@
-"""
-Evaluation Script for Outfit Classification Model
-Generates detailed metrics, confusion matrix, and example predictions
-"""
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -175,7 +170,7 @@ def find_misclassified_examples(test_dataset, labels, preds, probs, class_names,
                 'true_confidence': float(probs[idx][true_label])
             })
     
-    # Sort by confidence (most confident mistakes first)
+    # sort by confidence
     misclassified.sort(key=lambda x: x['confidence'], reverse=True)
     
     return misclassified[:num_examples]
@@ -193,33 +188,30 @@ def evaluate_model(config):
     print("🔍 Starting Model Evaluation")
     print(f"Device: {config.DEVICE}")
     
-    # Create results directory
     Path(config.RESULTS_DIR).mkdir(exist_ok=True)
     
     # Load data
-    print("\n📦 Loading test data...")
+    print("Loading test data...")
     test_loader, test_dataset = get_test_loader(config)
     class_names = test_dataset.classes
     print(f"Test set size: {len(test_dataset)} images")
     print(f"Classes: {class_names}")
     
     # Load model
-    print(f"\n🏗️  Loading model from {config.CHECKPOINT_PATH}...")
+    print(f"Loading model from {config.CHECKPOINT_PATH}...")
     model, checkpoint = load_model(config.CHECKPOINT_PATH, config.NUM_CLASSES, config.DEVICE)
     print("Model loaded successfully!")
     
     # Get predictions
-    print("\n🎯 Generating predictions...")
+    print("Generating predictions...")
     labels, preds, probs = get_predictions(model, test_loader, config.DEVICE)
     
     # Calculate metrics
-    print("\n📊 Calculating metrics...")
+    print("Calculating metrics...")
     
     # Overall accuracy
     accuracy = accuracy_score(labels, preds)
-    print(f"\n{'='*60}")
     print(f"OVERALL ACCURACY: {accuracy:.4f} ({accuracy*100:.2f}%)")
-    print(f"{'='*60}")
     
     # Top-2 accuracy
     top2_acc = calculate_top_k_accuracy(labels, probs, k=2)
@@ -230,11 +222,8 @@ def evaluate_model(config):
         labels, preds, average=None, labels=range(config.NUM_CLASSES)
     )
     
-    print(f"\n{'='*60}")
     print("PER-CLASS METRICS")
-    print(f"{'='*60}")
     print(f"{'Class':<25} {'Precision':>10} {'Recall':>10} {'F1-Score':>10} {'Support':>10}")
-    print("-" * 70)
     for i, class_name in enumerate(class_names):
         print(f"{class_name:<25} {precision[i]:>10.4f} {recall[i]:>10.4f} "
               f"{f1[i]:>10.4f} {support[i]:>10.0f}")
@@ -244,14 +233,11 @@ def evaluate_model(config):
     macro_recall = np.mean(recall)
     macro_f1 = np.mean(f1)
     
-    print("-" * 70)
     print(f"{'Macro Average':<25} {macro_precision:>10.4f} {macro_recall:>10.4f} {macro_f1:>10.4f}")
     
     # Confusion matrix
     cm = confusion_matrix(labels, preds)
-    print(f"\n{'='*60}")
     print("CONFUSION MATRIX")
-    print(f"{'='*60}")
     print(cm)
     
     # Save classification report
@@ -284,10 +270,10 @@ def evaluate_model(config):
     results_path = f"{config.RESULTS_DIR}/evaluation_results.json"
     with open(results_path, 'w') as f:
         json.dump(results, f, indent=2)
-    print(f"\n✅ Results saved to {results_path}")
+    print(f"Results saved to {results_path}")
     
     # Generate visualizations
-    print("\n📊 Generating visualizations...")
+    print("Generating visualizations...")
     
     plot_confusion_matrix(
         cm, class_names,
@@ -305,7 +291,7 @@ def evaluate_model(config):
     )
     
     # Find misclassified examples
-    print("\n🔍 Finding misclassified examples...")
+    print("Finding misclassified examples...")
     misclassified = find_misclassified_examples(
         test_dataset, labels, preds, probs, class_names, num_examples=10
     )
@@ -314,13 +300,13 @@ def evaluate_model(config):
     with open(misclassified_path, 'w') as f:
         json.dump(misclassified, f, indent=2)
     
-    print(f"\nTop 10 misclassified examples (most confident mistakes):")
+    print(f"Top 10 misclassified examples (most confident mistakes):")
     for i, example in enumerate(misclassified[:5], 1):
         print(f"\n{i}. {Path(example['path']).name}")
         print(f"   True: {example['true_label']}")
         print(f"   Predicted: {example['pred_label']} (confidence: {example['confidence']:.4f})")
     
-    print(f"\n✅ Evaluation complete!")
+    print(f"Evaluation complete!")
     print(f"All results saved to: {config.RESULTS_DIR}/")
 
 

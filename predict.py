@@ -12,24 +12,20 @@ class OutfitClassifier:
         """Initialize classifier with trained model"""
         self.device = device if device else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Load checkpoint
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
         self.class_names = checkpoint.get('class_names', [
             'casual_everyday', 'gym_athletic', 'interview_professional', 'party_social'
         ])
         num_classes = len(self.class_names)
         
-        # Create model
         self.model = models.resnet18(weights=None)
         in_features = self.model.fc.in_features
         self.model.fc = nn.Linear(in_features, num_classes)
         
-        # Load weights
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model = self.model.to(self.device)
         self.model.eval()
         
-        # Setup transforms
         self.transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
@@ -55,22 +51,18 @@ class OutfitClassifier:
         Returns:
             Dictionary with predictions and probabilities
         """
-        # Load and preprocess image
         try:
             image = Image.open(image_path).convert('RGB')
         except Exception as e:
             print(f"Error loading image: {e}")
             return None
         
-        # Transform and add batch dimension
         image_tensor = self.transform(image).unsqueeze(0).to(self.device)
         
-        # Get predictions
         with torch.no_grad():
             outputs = self.model(image_tensor)
             probabilities = torch.softmax(outputs, dim=1)[0]
         
-        # Get top-k predictions
         top_probs, top_indices = torch.topk(probabilities, min(top_k, len(self.class_names)))
         
         predictions = []
@@ -130,25 +122,20 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize classifier
     print("Loading outfit classifier...")
     classifier = OutfitClassifier(args.checkpoint)
     
-    # Process images
     print(f"Processing {len(args.images)} image(s)...")
     results = classifier.predict_batch(args.images, top_k=args.top_k)
     
-    # Display results
     for result in results:
         print(format_prediction_output(result))
     
-    # Save to file if requested
     if args.output:
         with open(args.output, 'w') as f:
             json.dump(results, f, indent=2)
         print(f"Results saved to {args.output}")
     
-    # Summary
     print(f"Processed {len(results)} image(s)")
 
 
